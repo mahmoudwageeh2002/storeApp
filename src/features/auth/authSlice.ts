@@ -43,11 +43,19 @@ const parseStorageJSON = <T>(key: string): T | null => {
   }
 };
 
+// Read once to avoid inconsistencies
+const storedToken = getStorageItem(STORAGE_KEYS.USER_TOKEN);
+const storedRefreshToken = getStorageItem(STORAGE_KEYS.REFRESH_TOKEN);
+const storedUser = parseStorageJSON<User>(STORAGE_KEYS.USER_DATA);
+const storedIsAuthenticated =
+  getStorageItem(STORAGE_KEYS.IS_AUTHENTICATED) === 'true';
+
 const initialState: AuthState = {
-  isAuthenticated: getStorageItem(STORAGE_KEYS.IS_AUTHENTICATED) === 'true',
-  token: getStorageItem(STORAGE_KEYS.USER_TOKEN),
-  refreshToken: getStorageItem('refresh_token'),
-  user: parseStorageJSON<User>(STORAGE_KEYS.USER_DATA),
+  // If a token exists, consider the user authenticated even if the flag wasn't set (extra safety)
+  isAuthenticated: storedIsAuthenticated || !!storedToken,
+  token: storedToken,
+  refreshToken: storedRefreshToken,
+  user: storedUser,
   loading: false,
   error: null,
 };
@@ -87,7 +95,10 @@ const authSlice = createSlice({
         mmkvStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
         mmkvStorage.setItem(STORAGE_KEYS.USER_TOKEN, action.payload.token);
         if (action.payload.refreshToken) {
-          mmkvStorage.setItem('refresh_token', action.payload.refreshToken);
+          mmkvStorage.setItem(
+            STORAGE_KEYS.REFRESH_TOKEN,
+            action.payload.refreshToken,
+          );
         }
         mmkvStorage.setItem(
           STORAGE_KEYS.USER_DATA,
@@ -110,7 +121,7 @@ const authSlice = createSlice({
       try {
         mmkvStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
         mmkvStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
-        mmkvStorage.removeItem('refresh_token');
+        mmkvStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         mmkvStorage.removeItem(STORAGE_KEYS.USER_DATA);
       } catch (error) {
         console.error('Error clearing auth data from storage:', error);
@@ -128,7 +139,7 @@ const authSlice = createSlice({
       try {
         mmkvStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
         mmkvStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
-        mmkvStorage.removeItem('refresh_token');
+        mmkvStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         mmkvStorage.removeItem(STORAGE_KEYS.USER_DATA);
         console.log('Auth data cleared from storage');
       } catch (error) {
