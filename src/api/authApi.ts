@@ -82,9 +82,10 @@ export const login = async (
 
     // Enhanced error handling
     if (axios.isAxiosError(error)) {
-      if (error.response?.status === 400) {
+      const status = error.response?.status;
+      if (status === 400) {
         throw new Error('Invalid username or password');
-      } else if (error.response?.status >= 500) {
+      } else if (typeof status === 'number' && status >= 500) {
         throw new Error('Server error. Please try again later.');
       }
     }

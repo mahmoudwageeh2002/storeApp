@@ -112,10 +112,6 @@ export const CategoryProductsScreen: React.FC<CategoryProductsScreenProps> = ({
     </View>
   );
 
-  const formatCategoryTitle = (cat: string) => {
-    return cat.name;
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView style={currentStyles.container}>

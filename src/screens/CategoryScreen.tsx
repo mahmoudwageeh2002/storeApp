@@ -14,9 +14,14 @@ import { OfflineBanner } from '../components/OfflineBanner';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { useTheme } from '../context/ThemeContext';
+interface Category {
+  name: string;
+  slug: string;
+  uri: string;
+}
 type CategoryStackParamList = {
   CategoryList: undefined;
-  CategoryProducts: { category: string };
+  CategoryProducts: { category: Category };
 };
 
 type CategoryScreenNavigationProp = NativeStackNavigationProp<
@@ -34,11 +39,11 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
   const { data: categories, isLoading, error, refetch } = useCategoryQuery();
   const { colors } = useTheme();
   const currentStyles = styles(colors);
-  const handleCategoryPress = (category: string) => {
+  const handleCategoryPress = (category: Category) => {
     navigation.navigate('CategoryProducts', { category });
   };
 
-  const renderCategory = (category: string, index: number) => (
+  const renderCategory = (category: Category, index: number) => (
     <TouchableOpacity
       key={index}
       style={currentStyles.categoryCard}
@@ -54,11 +59,11 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
     </TouchableOpacity>
   );
 
-  const formatCategoryName = (category: string): string => {
+  const formatCategoryName = (category: Category): string => {
     return category.name;
   };
 
-  const getCategoryEmoji = (category: string): string => {
+  const getCategoryEmoji = (category: Category): string => {
     switch (category.name.toLowerCase()) {
       case 'smartphones':
         return '📱';
@@ -144,7 +149,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
         showsVerticalScrollIndicator={false}
       >
         <View style={currentStyles.categoriesGrid}>
-          {categories?.map(renderCategory)}
+          {Array.isArray(categories) ? categories.map(renderCategory) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

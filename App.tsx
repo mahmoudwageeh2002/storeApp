@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { store, RootState } from './src/store/store';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ActivityTracker } from './src/components/ActivityTracker';
@@ -68,6 +69,7 @@ export default function App() {
             <ActivityTracker>
               <AppNavigator />
             </ActivityTracker>
+            <Toast />
           </SafeAreaProvider>
         </ThemeProvider>
       </QueryClientProvider>

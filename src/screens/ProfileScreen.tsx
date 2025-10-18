@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../features/auth/useAuth';
 import { useTheme } from '../context/ThemeContext';
 import { typography } from '../theme/typography';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export const ProfileScreen: React.FC = () => {
   const { user, logout, fetchProfile, authLoading, isAuthenticated } =
@@ -134,8 +135,14 @@ export const ProfileScreen: React.FC = () => {
           </View>
           {user.role === 'admin' && (
             <View style={currentStyles.adminNote}>
+              <Icon
+                name="lock-closed"
+                size={16}
+                style={currentStyles.adminNoteIcon}
+              />
+
               <Text style={currentStyles.adminNoteText}>
-                🔐 As an Admin, you have access to delete products in the store.
+                As an Admin, you have access to delete products in the store.
               </Text>
             </View>
           )}
@@ -272,6 +279,7 @@ const styles = (colors: any) =>
       borderRadius: 8,
       borderLeftWidth: 4,
       borderLeftColor: colors.warning,
+      flexDirection: 'row',
     },
     adminNoteText: {
       fontSize: typography.fontSizes.sm,
@@ -304,5 +312,8 @@ const styles = (colors: any) =>
     errorText: {
       fontSize: typography.fontSizes.lg,
       color: colors.danger,
+    },
+    adminNoteIcon: {
+      //   marginRight: 18,
     },
   });

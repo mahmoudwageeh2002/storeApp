@@ -1,8 +1,9 @@
 import React from 'react';
-import { Platform, Text } from 'react-native';
+import { Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../features/auth/useAuth';
 import { AuthNavigator } from './AuthNavigator';
 import { AllProductsScreen } from '../screens/AllProductsScreen';
@@ -15,7 +16,7 @@ import { typography } from '../theme/typography';
 import { useTheme } from '../context/ThemeContext';
 export type CategoryStackParamList = {
   CategoryList: undefined;
-  CategoryProducts: { category: string };
+  CategoryProducts: { category: any };
 };
 
 export type MainTabParamList = {
@@ -74,8 +75,8 @@ const MainTabNavigator: React.FC = () => {
         name="Products"
         component={AllProductsScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>🛍️</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="cart-outline" size={size || 24} color={color} />
           ),
         }}
       />
@@ -83,8 +84,8 @@ const MainTabNavigator: React.FC = () => {
         name="Categories"
         component={CategoryStackNavigator}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>📂</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="grid-outline" size={size || 24} color={color} />
           ),
         }}
       />
@@ -92,8 +93,8 @@ const MainTabNavigator: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>👤</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-outline" size={size || 24} color={color} />
           ),
         }}
       />

@@ -13,7 +13,11 @@ export interface Product {
   brand?: string;
   stock?: number;
 }
-
+interface Category {
+  name: string;
+  slug: string;
+  uri: string;
+}
 const productsApi = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -37,7 +41,7 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
 };
 
 export const fetchProductsByCategory = async (
-  category: string,
+  category: Category,
 ): Promise<Product[]> => {
   const response = await productsApi.get(`/products/category/${category.name}`);
 

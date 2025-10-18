@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useProductsQuery } from '../features/products/useProductsQuery';
 import {
   useCategoryQuery,
@@ -28,7 +28,7 @@ export const AllProductsScreen: React.FC = () => {
   const [deletedProducts, setDeletedProducts] = useState<Set<number>>(
     new Set(),
   );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   // Fetch all products
   const {
@@ -73,21 +73,13 @@ export const AllProductsScreen: React.FC = () => {
   }, [token]);
 
   const handleDeleteProduct = (product: Product) => {
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setDeletedProducts(prev => new Set([...prev, product.id]));
-            Alert.alert('Success', 'Product deleted successfully (simulated)');
-          },
-        },
-      ],
-    );
+    setDeletedProducts(prev => new Set([...prev, product.id]));
+    Toast.show({
+      type: 'success',
+      text1: 'Product Deleted',
+      text2: `"${product.title}" has been removed`,
+      position: 'top',
+    });
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
