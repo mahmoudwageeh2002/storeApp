@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: typography.fontSizes.md,
     backgroundColor: colors.backgroundSecondary,
+    color: colors.textPrimary,
   },
   errorText: {
     color: colors.danger,

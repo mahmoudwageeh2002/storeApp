@@ -139,11 +139,11 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeights.medium,
   },
   loginButton: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.primary,
     paddingHorizontal: 40,
     paddingVertical: 15,
-    borderRadius: 25,
-    minWidth: 200,
+    borderRadius: 20,
+    minWidth: 250,
   },
   loginButtonText: {
     color: colors.background,
