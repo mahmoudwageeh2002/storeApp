@@ -1,6 +1,13 @@
 import React, { useEffect } from 'react';
-import { PanResponder, View } from 'react-native';
+import {
+  View,
+  Keyboard,
+  AppState,
+  AppStateStatus,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { autoLockService } from '../services/autoLock';
+import { navigationRef } from '../navigation/navigationRef';
 
 interface ActivityTrackerProps {
   children: React.ReactNode;
@@ -9,24 +16,45 @@ interface ActivityTrackerProps {
 export const ActivityTracker: React.FC<ActivityTrackerProps> = ({
   children,
 }) => {
-  const panResponder = React.useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => {
-        // Reset auto-lock timer on any touch
-        autoLockService.resetLockTimer();
-        return false; // Don't consume the touch event
+  useEffect(() => {
+    // 🧭 Keyboard activity
+    const showSub = Keyboard.addListener('keyboardDidShow', () =>
+      autoLockService.resetLockTimer(),
+    );
+    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
+      autoLockService.resetLockTimer(),
+    );
+
+    // 🧭 Navigation activity
+    const unsubscribeNav = navigationRef.addListener('state', () => {
+      autoLockService.resetLockTimer();
+    });
+
+    // 🌓 App returns to foreground
+    const appStateSub = AppState.addEventListener(
+      'change',
+      (state: AppStateStatus) => {
+        if (state === 'active') {
+          autoLockService.resetLockTimer();
+        }
       },
-      onMoveShouldSetPanResponder: () => {
-        // Reset auto-lock timer on any movement
-        autoLockService.resetLockTimer();
-        return false; // Don't consume the touch event
-      },
-    }),
-  ).current;
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      unsubscribeNav();
+      appStateSub.remove();
+    };
+  }, []);
 
   return (
-    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-      {children}
-    </View>
+    <TouchableWithoutFeedback
+      onPress={() => autoLockService.resetLockTimer()}
+      onTouchStart={() => autoLockService.resetLockTimer()}
+      accessible={false}
+    >
+      <View style={{ flex: 1 }}>{children}</View>
+    </TouchableWithoutFeedback>
   );
 };

@@ -106,7 +106,7 @@ export const AppNavigator: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <NavigationContainer>
+    <>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <Stack.Screen name="Main" component={MainTabNavigator} />
@@ -115,6 +115,6 @@ export const AppNavigator: React.FC = () => {
         )}
       </Stack.Navigator>
       <LockOverlay />
-    </NavigationContainer>
+    </>
   );
 };

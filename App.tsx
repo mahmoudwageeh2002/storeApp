@@ -4,13 +4,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { store, RootState } from './src/store/store';
+import { NavigationContainer } from '@react-navigation/native';
+
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ActivityTracker } from './src/components/ActivityTracker';
 import { ThemedStatusBar } from './src/components/ThemedStatusBar';
 import { autoLockService } from './src/services/autoLock';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { lockApp, unlockApp } from './src/features/lock/lockSlice';
-
+import { navigationRef } from './src/navigation/navigationRef';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -67,7 +69,9 @@ export default function App() {
             <ThemedStatusBar />
             <LockInitializer />
             <ActivityTracker>
-              <AppNavigator />
+              <NavigationContainer ref={navigationRef}>
+                <AppNavigator />
+              </NavigationContainer>
             </ActivityTracker>
             <Toast />
           </SafeAreaProvider>
