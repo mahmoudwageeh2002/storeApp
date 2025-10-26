@@ -1,6 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { mmkvStorage } from '../../storage/mmkv';
-import { STORAGE_KEYS } from '../../utils/constants';
 
 export interface User {
   id: number;
@@ -22,50 +20,14 @@ interface AuthState {
   error: string | null;
 }
 
-// Helper function to safely get from storage
-const getStorageItem = (key: string): string | null => {
-  try {
-    return mmkvStorage.getItem(key);
-  } catch (error) {
-    console.error(`Error reading ${key} from storage:`, error);
-    return null;
-  }
-};
-
-// Helper function to safely parse JSON from storage
-const parseStorageJSON = <T>(key: string): T | null => {
-  try {
-    const item = getStorageItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch (error) {
-    console.error(`Error parsing ${key} from storage:`, error);
-    return null;
-  }
-};
-
-// Read once to avoid inconsistencies
-const storedToken = getStorageItem(STORAGE_KEYS.USER_TOKEN);
-const storedRefreshToken = getStorageItem(STORAGE_KEYS.REFRESH_TOKEN);
-const storedUser = parseStorageJSON<User>(STORAGE_KEYS.USER_DATA);
-const storedIsAuthenticated =
-  getStorageItem(STORAGE_KEYS.IS_AUTHENTICATED) === 'true';
-
 const initialState: AuthState = {
-  // If a token exists, consider the user authenticated even if the flag wasn't set (extra safety)
-  isAuthenticated: storedIsAuthenticated || !!storedToken,
-  token: storedToken,
-  refreshToken: storedRefreshToken,
-  user: storedUser,
+  isAuthenticated: false,
+  token: null,
+  refreshToken: null,
+  user: null,
   loading: false,
   error: null,
 };
-
-// Log initial state for debugging
-console.log('Auth initial state:', {
-  isAuthenticated: initialState.isAuthenticated,
-  hasToken: !!initialState.token,
-  hasUser: !!initialState.user,
-});
 
 const authSlice = createSlice({
   name: 'auth',
@@ -89,25 +51,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.loading = false;
       state.error = null;
-
-      // Persist to storage with error handling
-      try {
-        mmkvStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
-        mmkvStorage.setItem(STORAGE_KEYS.USER_TOKEN, action.payload.token);
-        if (action.payload.refreshToken) {
-          mmkvStorage.setItem(
-            STORAGE_KEYS.REFRESH_TOKEN,
-            action.payload.refreshToken,
-          );
-        }
-        mmkvStorage.setItem(
-          STORAGE_KEYS.USER_DATA,
-          JSON.stringify(action.payload.user),
-        );
-        console.log('Auth data saved to storage successfully');
-      } catch (error) {
-        console.error('Error saving auth data to storage:', error);
-      }
+      console.log('Auth data saved to Redux state:', action.payload.user);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isAuthenticated = false;
@@ -116,16 +60,6 @@ const authSlice = createSlice({
       state.user = null;
       state.loading = false;
       state.error = action.payload;
-
-      // Clear storage
-      try {
-        mmkvStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
-        mmkvStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
-        mmkvStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        mmkvStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      } catch (error) {
-        console.error('Error clearing auth data from storage:', error);
-      }
     },
     logout: state => {
       state.isAuthenticated = false;
@@ -134,17 +68,7 @@ const authSlice = createSlice({
       state.user = null;
       state.loading = false;
       state.error = null;
-
-      // Clear storage
-      try {
-        mmkvStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
-        mmkvStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
-        mmkvStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        mmkvStorage.removeItem(STORAGE_KEYS.USER_DATA);
-        console.log('Auth data cleared from storage');
-      } catch (error) {
-        console.error('Error clearing auth data from storage:', error);
-      }
+      console.log('Auth data cleared from Redux state');
     },
     clearError: state => {
       state.error = null;
@@ -157,16 +81,6 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.loading = false;
       state.error = null;
-
-      // Update user data in storage
-      try {
-        mmkvStorage.setItem(
-          STORAGE_KEYS.USER_DATA,
-          JSON.stringify(action.payload),
-        );
-      } catch (error) {
-        console.error('Error updating user data in storage:', error);
-      }
     },
     fetchProfileFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;

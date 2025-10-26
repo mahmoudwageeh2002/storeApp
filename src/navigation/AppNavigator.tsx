@@ -1,10 +1,8 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useAuth } from '../features/auth/useAuth';
 import { AuthNavigator } from './AuthNavigator';
 import { AllProductsScreen } from '../screens/AllProductsScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
@@ -14,6 +12,8 @@ import { LockOverlay } from '../components/LockOverlay';
 // import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { useTheme } from '../context/ThemeContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 export type CategoryStackParamList = {
   CategoryList: undefined;
   CategoryProducts: { category: any };
@@ -34,8 +34,6 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const CategoryStack = createNativeStackNavigator<CategoryStackParamList>();
 const CategoryStackNavigator: React.FC = () => {
-  const { colors } = useTheme();
-
   return (
     <CategoryStack.Navigator
       screenOptions={{
@@ -103,7 +101,7 @@ const MainTabNavigator: React.FC = () => {
 };
 
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   return (
     <>

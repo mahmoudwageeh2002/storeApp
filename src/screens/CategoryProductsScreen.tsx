@@ -60,8 +60,8 @@ export const CategoryProductsScreen: React.FC<CategoryProductsScreenProps> = ({
     data: products,
     isLoading,
     error,
-    refetch,
-    isRefetching,
+    refetch, // ✅ This is automatically provided
+    isRefetching, // ✅ This is automatically provided
   } = useProductsByCategoryQuery(category);
 
   const filteredProducts = products?.filter(
@@ -156,7 +156,9 @@ export const CategoryProductsScreen: React.FC<CategoryProductsScreenProps> = ({
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              colors={[colors.primary]}
+              colors={[colors.primary]} // Android
+              tintColor={colors.primary} // iOS
+              progressBackgroundColor={colors.backgroundSecondary} // Android background
             />
           }
         />

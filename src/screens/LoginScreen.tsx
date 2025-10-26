@@ -23,11 +23,10 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [shouldInitializeLock, setShouldInitializeLock] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { login, authLoading: loading, error, isAuthenticated } = useAuth();
+  const { login, authLoading: loading, error } = useAuth();
 
-  const { isAvailable, biometryType, authenticate } = useBiometricAuth();
+  const { biometryType, authenticate } = useBiometricAuth();
 
-  // Initialize auto-lock service after successful login
   useEffect(() => {
     if (shouldInitializeLock) {
       autoLockService.initialize();
@@ -148,9 +147,10 @@ export const LoginScreen: React.FC = () => {
               style={[
                 styles.loginButton,
                 loading && styles.loginButtonDisabled,
+                !username && !password && styles.loginButtonDisabled,
               ]}
               onPress={handleLogin}
-              disabled={loading}
+              disabled={loading || !username || !password}
             >
               {loading ? (
                 <ActivityIndicator color={colors.background} />
@@ -160,25 +160,25 @@ export const LoginScreen: React.FC = () => {
             </TouchableOpacity>
 
             {/* Biometric login */}
-            {isAvailable && (
-              <>
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR</Text>
-                  <View style={styles.dividerLine} />
-                </View>
+            {/* {isAvailable && ( */}
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-                <TouchableOpacity
-                  style={styles.biometricButton}
-                  onPress={handleBiometricLogin}
-                  disabled={loading}
-                >
-                  <Text style={styles.biometricButtonText}>
-                    {getBiometricButtonText()}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
+              <TouchableOpacity
+                style={styles.biometricButton}
+                onPress={handleBiometricLogin}
+                disabled={loading}
+              >
+                <Text style={styles.biometricButtonText}>
+                  {getBiometricButtonText()}
+                </Text>
+              </TouchableOpacity>
+            </>
+            {/* )} */}
           </View>
         </View>
       </KeyboardAvoidingView>

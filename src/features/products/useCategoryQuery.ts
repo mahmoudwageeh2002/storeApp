@@ -4,11 +4,13 @@ import {
   fetchCategories,
   Product,
 } from '../../api/productsApi';
+
 interface Category {
   name: string;
   slug: string;
   uri: string;
 }
+
 export const useCategoryQuery = () => {
   return useQuery<any[], Error>({
     queryKey: ['categories'],

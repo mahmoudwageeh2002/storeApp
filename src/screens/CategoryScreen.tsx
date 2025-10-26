@@ -2,10 +2,11 @@ import React from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,11 +15,13 @@ import { OfflineBanner } from '../components/OfflineBanner';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { useTheme } from '../context/ThemeContext';
+
 interface Category {
   name: string;
   slug: string;
   uri: string;
 }
+
 type CategoryStackParamList = {
   CategoryList: undefined;
   CategoryProducts: { category: Category };
@@ -36,25 +39,40 @@ interface CategoryScreenProps {
 export const CategoryScreen: React.FC<CategoryScreenProps> = ({
   navigation,
 }) => {
-  const { data: categories, isLoading, error, refetch } = useCategoryQuery();
+  const {
+    data: categories,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useCategoryQuery();
   const { colors } = useTheme();
   const currentStyles = styles(colors);
+
   const handleCategoryPress = (category: Category) => {
     navigation.navigate('CategoryProducts', { category });
   };
 
-  const renderCategory = (category: Category, index: number) => (
+  const renderCategory = ({
+    item,
+    index,
+  }: {
+    item: Category;
+    index: number;
+  }) => (
     <TouchableOpacity
-      key={index}
-      style={currentStyles.categoryCard}
-      onPress={() => handleCategoryPress(category)}
+      style={[
+        currentStyles.categoryCard,
+        index % 2 === 1
+          ? currentStyles.categoryCardRight
+          : currentStyles.categoryCardLeft,
+      ]}
+      onPress={() => handleCategoryPress(item)}
       activeOpacity={0.7}
     >
-      <Text style={currentStyles.categoryEmoji}>
-        {getCategoryEmoji(category)}
-      </Text>
+      <Text style={currentStyles.categoryEmoji}>{getCategoryEmoji(item)}</Text>
       <Text style={currentStyles.categoryTitle}>
-        {formatCategoryName(category)}
+        {formatCategoryName(item)}
       </Text>
     </TouchableOpacity>
   );
@@ -83,7 +101,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
       case 'mens-shirts':
         return '👕';
       case 'womens-dresses':
-        return '�';
+        return '👗';
       case 'mens-shoes':
       case 'womens-shoes':
         return '👟';
@@ -97,15 +115,28 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
       case 'sunglasses':
         return '🕶️';
       case 'automotive':
-        return '�';
+        return '🚗';
       case 'motorcycle':
         return '🏍️';
       case 'lighting':
-        return '�';
+        return '💡';
       default:
         return '🛍️';
     }
   };
+
+  const renderEmpty = () => (
+    <View style={currentStyles.emptyContainer}>
+      <Text style={currentStyles.emptyText}>No categories found</Text>
+    </View>
+  );
+
+  const renderError = () => (
+    <View style={currentStyles.errorContainer}>
+      <Text style={currentStyles.errorText}>Failed to load categories</Text>
+      <Text style={currentStyles.errorSubtext}>Pull down to retry</Text>
+    </View>
+  );
 
   if (isLoading) {
     return (
@@ -119,23 +150,6 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <SafeAreaView style={currentStyles.container}>
-        <OfflineBanner />
-        <View style={currentStyles.errorContainer}>
-          <Text style={currentStyles.errorText}>Failed to load categories</Text>
-          <TouchableOpacity
-            style={currentStyles.retryButton}
-            onPress={() => refetch()}
-          >
-            <Text style={currentStyles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={currentStyles.container}>
       <OfflineBanner />
@@ -144,14 +158,29 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
         <Text style={currentStyles.subtitle}>Browse products by category</Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={currentStyles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={currentStyles.categoriesGrid}>
-          {Array.isArray(categories) ? categories.map(renderCategory) : null}
-        </View>
-      </ScrollView>
+      {error ? (
+        renderError()
+      ) : (
+        <FlatList
+          data={categories || []}
+          renderItem={renderCategory}
+          keyExtractor={(item, index) => `${item.slug}-${index}`}
+          numColumns={2}
+          contentContainerStyle={currentStyles.listContainer}
+          columnWrapperStyle={currentStyles.row}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmpty}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              colors={[colors.primary]} // Android
+              tintColor={colors.primary} // iOS
+              progressBackgroundColor={colors.backgroundSecondary} // Android background
+            />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -178,13 +207,12 @@ const styles = (colors: any) =>
       fontSize: typography.fontSizes.md,
       color: colors.textSecondary,
     },
-    scrollContainer: {
+    listContainer: {
       padding: 16,
     },
-    categoriesGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+    row: {
       justifyContent: 'space-between',
+      gap: 8,
     },
     categoryCard: {
       width: '48%',
@@ -201,6 +229,12 @@ const styles = (colors: any) =>
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
+    },
+    categoryCardLeft: {
+      marginRight: 4,
+    },
+    categoryCardRight: {
+      marginLeft: 4,
     },
     categoryEmoji: {
       fontSize: 48,
@@ -222,21 +256,37 @@ const styles = (colors: any) =>
       fontSize: typography.fontSizes.md,
       color: colors.textSecondary,
     },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: 60,
+    },
+    emptyText: {
+      fontSize: typography.fontSizes.lg,
+      color: colors.textSecondary,
+    },
     errorContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingTop: 60,
     },
     errorText: {
       fontSize: typography.fontSizes.lg,
       color: colors.danger,
-      marginBottom: 16,
+      marginBottom: 8,
+    },
+    errorSubtext: {
+      fontSize: typography.fontSizes.md,
+      color: colors.textSecondary,
     },
     retryButton: {
       backgroundColor: colors.primary,
       paddingHorizontal: 24,
       paddingVertical: 12,
       borderRadius: 8,
+      marginTop: 16,
     },
     retryButtonText: {
       color: colors.background,

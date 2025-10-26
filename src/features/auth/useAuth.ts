@@ -16,17 +16,26 @@ export const useAuth = () => {
   const { isAuthenticated, token, user, loading, error } = useSelector(
     (state: RootState) => state.auth,
   );
-  console.log('usersssssssssddd:', user);
+
+  console.log('useAuth - Current state:', {
+    isAuthenticated,
+    hasToken: !!token,
+    hasUser: !!user,
+    userName: user?.firstName,
+  });
 
   const handleLogin = async (credentials: LoginCredentials) => {
     try {
       dispatch(loginStart());
       const response = await login(credentials);
+      console.log('Login response:', response);
       dispatch(loginSuccess(response));
+      return response;
     } catch (error) {
       dispatch(
         loginFailure(error instanceof Error ? error.message : 'Login failed'),
       );
+      throw error;
     }
   };
 
@@ -35,7 +44,10 @@ export const useAuth = () => {
   };
 
   const fetchProfile = async () => {
-    if (!token) return;
+    if (!token) {
+      console.log('No token available for profile fetch');
+      return;
+    }
 
     try {
       dispatch(fetchProfileStart());

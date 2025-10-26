@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -20,15 +22,19 @@ import { ProductItem } from '../components/ProductItem';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { Product } from '../api/productsApi';
 import { useAuth } from '../features/auth/useAuth';
-// import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { useTheme } from '../context/ThemeContext';
+
 export const AllProductsScreen: React.FC = () => {
   const { user, token, fetchProfile, authLoading } = useAuth();
   const [deletedProducts, setDeletedProducts] = useState<Set<number>>(
     new Set(),
   );
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
+
+  // scroll ref + layout tracking
+  const scrollRef = useRef<ScrollView>(null);
+  const chipLayouts = useRef<Record<string, { x: number; width: number }>>({});
 
   // Fetch all products
   const {
@@ -53,7 +59,6 @@ export const AllProductsScreen: React.FC = () => {
   const { isDarkMode, colors } = useTheme();
   const currentStyles = styles(colors);
 
-  // Determine which products to display
   const products = selectedCategory ? categoryProducts : allProducts;
   const isLoading = selectedCategory ? isLoadingCategory : isLoadingAll;
   const error = selectedCategory ? categoryError : allProductsError;
@@ -65,21 +70,32 @@ export const AllProductsScreen: React.FC = () => {
   const filteredProducts = products?.filter(
     product => !deletedProducts.has(product.id),
   );
-  // ✅ only fetch profile once token is available
+
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
+    if (token) fetchProfile();
   }, [token]);
 
   const handleDeleteProduct = (product: Product) => {
-    setDeletedProducts(prev => new Set([...prev, product.id]));
-    Toast.show({
-      type: 'success',
-      text1: 'Product Deleted',
-      text2: `"${product.title}" has been removed`,
-      position: 'top',
-    });
+    Alert.alert(
+      'Delete Product',
+      `Are you sure you want to delete "${product.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setDeletedProducts(prev => new Set([...prev, product.id]));
+            Toast.show({
+              type: 'success',
+              text1: 'Product Deleted',
+              text2: `"${product.title}" has been removed`,
+              position: 'top',
+            });
+          },
+        },
+      ],
+    );
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
@@ -93,17 +109,34 @@ export const AllProductsScreen: React.FC = () => {
     />
   );
 
-  const handleCategorySelect = (category: string) => {
+  const handleCategorySelect = (category: any) => {
     setSelectedCategory(category);
+    // Smoothly scroll to the selected tab
+    const layout = chipLayouts.current[category.slug];
+    if (layout && scrollRef.current) {
+      scrollRef.current.scrollTo({
+        x: layout.x - layout.width,
+        animated: true,
+      });
+    }
   };
 
   const handleResetCategory = () => {
     setSelectedCategory(null);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ x: 0, animated: true });
+    }
+  };
+
+  const onChipLayout = (categorySlug: string, e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout;
+    chipLayouts.current[categorySlug] = { x, width };
   };
 
   const renderCategoryFilter = () => (
     <View style={currentStyles.filterContainer}>
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={currentStyles.categoryScroll}
@@ -132,6 +165,7 @@ export const AllProductsScreen: React.FC = () => {
               selectedCategory === category &&
                 currentStyles.categoryChipSelected,
             ]}
+            onLayout={e => onChipLayout(category.slug, e)}
             onPress={() => handleCategorySelect(category)}
           >
             <Text
@@ -186,12 +220,9 @@ export const AllProductsScreen: React.FC = () => {
       ) : (
         <>
           {loadingPage ? (
-            <>
-              <OfflineBanner />
-              <View style={currentStyles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-              </View>
-            </>
+            <View style={currentStyles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
           ) : (
             <FlatList
               data={filteredProducts}
@@ -206,7 +237,9 @@ export const AllProductsScreen: React.FC = () => {
                 <RefreshControl
                   refreshing={isRefetching}
                   onRefresh={refetch}
-                  colors={[colors.primary]}
+                  colors={[colors.primary]} // Android
+                  tintColor={colors.primary} // iOS
+                  progressBackgroundColor={colors.backgroundSecondary} // Android background
                 />
               }
             />
@@ -220,7 +253,6 @@ export const AllProductsScreen: React.FC = () => {
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      flex: 1,
       backgroundColor: colors.background,
     },
     header: {
@@ -246,11 +278,6 @@ const styles = (colors: any) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-    },
-    loadingText: {
-      marginTop: 16,
-      fontSize: typography.fontSizes.md,
-      color: colors.textSecondary,
     },
     emptyContainer: {
       flex: 1,
@@ -285,6 +312,7 @@ const styles = (colors: any) =>
     },
     categoryScroll: {
       paddingHorizontal: 16,
+      alignItems: 'center',
     },
     categoryChip: {
       backgroundColor: colors.backgroundSecondary,
