@@ -9,7 +9,7 @@ export class AutoLockService {
   private lockTimeout: number | null = null;
   private isLocked: boolean = false;
   private listeners: LockStateListener[] = [];
-  private lockTimeoutDuration: number = 10000; // 10 seconds
+  private lockTimeoutDuration: number = 10000000000000000; // 10 seconds
   private appStateSubscription: any = null;
 
   private constructor() {

@@ -166,17 +166,7 @@ export const AllProductsScreen: React.FC = () => {
     </View>
   );
 
-  if (isLoading || authLoading) {
-    return (
-      <SafeAreaView style={currentStyles.container}>
-        <OfflineBanner />
-        <View style={currentStyles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={currentStyles.loadingText}>Loading products...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const loadingPage = authLoading || isLoading;
 
   return (
     <SafeAreaView style={currentStyles.container}>
@@ -194,23 +184,34 @@ export const AllProductsScreen: React.FC = () => {
       {error ? (
         renderError()
       ) : (
-        <FlatList
-          data={filteredProducts}
-          renderItem={renderProduct}
-          keyExtractor={item => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={currentStyles.listContainer}
-          columnWrapperStyle={currentStyles.row}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmpty}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              colors={[colors.primary]}
+        <>
+          {loadingPage ? (
+            <>
+              <OfflineBanner />
+              <View style={currentStyles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
+            </>
+          ) : (
+            <FlatList
+              data={filteredProducts}
+              renderItem={renderProduct}
+              keyExtractor={item => item.id.toString()}
+              numColumns={2}
+              contentContainerStyle={currentStyles.listContainer}
+              columnWrapperStyle={currentStyles.row}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={renderEmpty}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetching}
+                  onRefresh={refetch}
+                  colors={[colors.primary]}
+                />
+              }
             />
-          }
-        />
+          )}
+        </>
       )}
     </SafeAreaView>
   );
